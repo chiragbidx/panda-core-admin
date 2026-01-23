@@ -25,6 +25,8 @@ export const DynamicTableEdit: React.FC = () => {
   const navigate = useNavigate();
   const [tableColumns, setTableColumns] = useState<TableColumn[]>([]);
   const [loading, setLoading] = useState(true);
+  const editId =
+    (recordIdFromState ?? recordFromState?.id ?? id ?? "") as string;
 
   const {
     saveButtonProps,
@@ -36,8 +38,16 @@ export const DynamicTableEdit: React.FC = () => {
   } = useForm<any, HttpError, any>({
     refineCoreProps: {
       resource: tableName,
-      id: (id ?? recordIdFromState ?? recordFromState?.id ?? "") as string,
+      id: editId,
       action: "edit",
+      successNotification: () => ({
+        type: "success",
+        message: "Record updated",
+      }),
+      errorNotification: (error) => ({
+        type: "error",
+        message: error?.message || "Update failed",
+      }),
       meta: {
         // Ensure the backend can resolve DB connection for getOne
         query: {
@@ -47,8 +57,17 @@ export const DynamicTableEdit: React.FC = () => {
       // Disable automatic getOne to prevent failing GETs; we hydrate from navigation state
       queryOptions: {
         enabled: false,
+        initialData: recordFromState ? { data: recordFromState } : undefined,
+        retry: false,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+      },
+      onMutationSuccess: (data, variables) => {
+        // Keep current form values; no reset to avoid reverting fields
       },
     },
+    defaultValues: recordFromState as any,
   });
 
   useEffect(() => {
@@ -70,10 +89,10 @@ export const DynamicTableEdit: React.FC = () => {
     try {
       const columns = await fetchTableColumns(tableName);
       setTableColumns(getEditableColumns(columns));
-      // If data already loaded, ensure form is populated with fetched record
-      if (queryResult?.data?.data) {
-        reset(queryResult.data.data as any);
-      }
+        // If data already loaded, ensure form is populated with fetched record
+        if (queryResult?.data?.data) {
+          reset(queryResult.data.data as any);
+        }
     } catch (err: any) {
       open?.({
         type: "error",
@@ -87,10 +106,10 @@ export const DynamicTableEdit: React.FC = () => {
 
   useEffect(() => {
     const record = queryResult?.data?.data;
-    if (record) {
+    if (record && !recordFromState) {
       reset(record as any);
     }
-  }, [queryResult?.data?.data, reset]);
+  }, [queryResult?.data?.data, recordFromState, reset]);
 
   if (loading) {
     return <Edit>Loading form...</Edit>;
