@@ -3,7 +3,7 @@
 This frontend application requires a backend API that connects to PostgreSQL. The backend should implement the following endpoints:
 
 ## Base URL
-The API base URL is configured via the `VITE_API_URL` environment variable (default: `http://localhost:3000/api`).
+The API base URL is configured via the `VITE_API_URL` environment variable (default: `https://panda-core-admin-gateway-production.up.railway.app/api`).
 
 ## Required Endpoints
 
@@ -11,18 +11,18 @@ The API base URL is configured via the `VITE_API_URL` environment variable (defa
 ```
 POST /api/database/connect
 Body: {
-  databaseUrl: string
+  dbUrl: string
 }
 Response: {
   success: boolean
 }
 ```
 
-**All endpoints include a `databaseUrl` query parameter in requests from the frontend so the gateway can route to the correct database connection.**
+**GET/DELETE requests include a `dbUrl` query parameter so the gateway can route to the correct database connection. POST/PUT requests include `dbUrl` in the JSON body.**
 
 ### 2. Get All Tables
 ```
-GET /api/tables?databaseUrl=postgresql://...
+GET /api/tables?dbUrl=postgres://...
 Response: {
   data: Array<{
     table_name: string,
@@ -33,7 +33,7 @@ Response: {
 
 ### 3. Get Table Columns
 ```
-GET /api/tables/:tableName/columns
+GET /api/tables/:tableName/columns?dbUrl=postgres://...
 Response: {
   data: Array<{
     column_name: string,
@@ -49,7 +49,7 @@ Response: {
 
 #### List Records
 ```
-GET /api/:tableName?_page=1&_limit=10&_sort=id&_order=asc
+GET /api/:tableName?dbUrl=postgres://...&_page=1&_limit=10&_sort=id&_order=asc&filters=[{field,operator,value}]
 Headers: {
   x-total-count: number (total count of records)
 }
@@ -58,27 +58,33 @@ Response: Array<Record> | { data: Array<Record> }
 
 #### Get Single Record
 ```
-GET /api/:tableName/:id
+GET /api/:tableName/:id?dbUrl=postgres://...
 Response: Record | { data: Record }
 ```
 
 #### Create Record
 ```
 POST /api/:tableName
-Body: Record (object with table columns)
+Body: {
+  dbUrl: string,
+  ...RecordFields
+}
 Response: Record | { data: Record }
 ```
 
 #### Update Record
 ```
 PUT /api/:tableName/:id
-Body: Record (object with table columns)
+Body: {
+  dbUrl: string,
+  ...RecordFields
+}
 Response: Record | { data: Record }
 ```
 
 #### Delete Record
 ```
-DELETE /api/:tableName/:id
+DELETE /api/:tableName/:id?dbUrl=postgres://...
 Response: Record | { data: Record }
 ```
 
@@ -99,12 +105,12 @@ let pool = null;
 
 // Connect to database
 app.post('/api/database/connect', async (req, res) => {
-  const { databaseUrl } = req.body;
+  const { dbUrl } = req.body;
   
   try {
     pool = new Pool({
-      connectionString: databaseUrl,
-      ssl: databaseUrl.includes('sslmode=require'),
+      connectionString: dbUrl,
+      ssl: dbUrl.includes('sslmode=require'),
     });
     
     await pool.query('SELECT NOW()');

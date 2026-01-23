@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://panda-core-admin-gateway-production.up.railway.app/api";
 const STORAGE_KEY = "db_connection";
 
 export interface DatabaseTable {
@@ -15,23 +17,23 @@ export interface TableColumn {
 }
 
 export interface DatabaseConnection {
-  databaseUrl: string;
+  dbUrl: string;
 }
 
-const appendDatabaseUrl = (url: string): string => {
+const appendDbUrl = (url: string): string => {
   const connection = getConnection();
-  const databaseUrl = connection?.databaseUrl;
-  if (!databaseUrl) return url;
+  const dbUrl = connection?.dbUrl;
+  if (!dbUrl) return url;
 
   const separator = url.includes("?") ? "&" : "?";
-  return `${url}${separator}databaseUrl=${encodeURIComponent(databaseUrl)}`;
+  return `${url}${separator}dbUrl=${encodeURIComponent(dbUrl)}`;
 };
 
 /**
  * Fetch all tables from the database
  */
 export const fetchTables = async (): Promise<DatabaseTable[]> => {
-  const response = await fetch(appendDatabaseUrl(`${API_URL}/tables`), {
+  const response = await fetch(appendDbUrl(`${API_URL}/tables`), {
     headers: {
       "Content-Type": "application/json",
     },
@@ -52,7 +54,7 @@ export const fetchTableColumns = async (
   tableName: string,
 ): Promise<TableColumn[]> => {
   const response = await fetch(
-    appendDatabaseUrl(`${API_URL}/tables/${tableName}/columns`),
+    appendDbUrl(`${API_URL}/tables/${tableName}/columns`),
     {
       headers: {
         "Content-Type": "application/json",
@@ -79,7 +81,7 @@ export const testConnection = async (
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(connection),
+    body: JSON.stringify({ dbUrl: connection.dbUrl }),
   });
 
   if (!response.ok) {
@@ -104,7 +106,11 @@ export const getConnection = (): DatabaseConnection | null => {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) return null;
   try {
-    return JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    if (parsed.databaseUrl && !parsed.dbUrl) {
+      return { dbUrl: parsed.databaseUrl as string };
+    }
+    return parsed as DatabaseConnection;
   } catch {
     return null;
   }
@@ -112,7 +118,8 @@ export const getConnection = (): DatabaseConnection | null => {
 
 export const getDatabaseUrl = (): string | null => {
   const connection = getConnection();
-  return connection?.databaseUrl || null;
+  return connection?.dbUrl || null;
 };
 
-export const withDatabaseUrl = appendDatabaseUrl;
+export const withDatabaseUrl = appendDbUrl;
+export const withDbUrl = appendDbUrl;

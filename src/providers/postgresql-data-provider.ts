@@ -1,11 +1,28 @@
 import { DataProvider } from "@refinedev/core";
-import { withDatabaseUrl } from "../utils/database";
+import { getDatabaseUrl, withDbUrl } from "../utils/database";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://panda-core-admin-gateway-production.up.railway.app/api";
 
-const buildUrl = (path: string, params?: URLSearchParams) => {
+const buildUrl = (
+  path: string,
+  params?: URLSearchParams,
+  includeDbUrl = true,
+) => {
   const query = params && params.toString() ? `?${params.toString()}` : "";
-  return withDatabaseUrl(`${API_URL}/${path}${query}`);
+  const url = `${API_URL}/${path}${query}`;
+  return includeDbUrl ? withDbUrl(url) : url;
+};
+
+const withDbUrlInBody = (payload: Record<string, unknown> = {}) => {
+  const dbUrl = getDatabaseUrl();
+  if (!dbUrl) return payload;
+
+  return {
+    ...payload,
+    dbUrl,
+  };
 };
 
 export const postgresqlDataProvider = (): DataProvider => {
@@ -24,11 +41,25 @@ export const postgresqlDataProvider = (): DataProvider => {
       }
 
       if (filters && filters.length > 0) {
-        filters.forEach((filter) => {
-          if ("field" in filter && "value" in filter) {
-            queryParams.append(filter.field, filter.value);
-          }
-        });
+        const serializedFilters = filters
+          .map((filter) => {
+            if ("field" in filter && "operator" in filter) {
+              return {
+                field: filter.field,
+                operator: (filter as any).operator,
+                value: "value" in filter ? (filter as any).value : undefined,
+              };
+            }
+            return null;
+          })
+          .filter(
+            (filter): filter is { field: string; operator: string; value: any } =>
+              !!filter && filter.value !== undefined,
+          );
+
+        if (serializedFilters.length > 0) {
+          queryParams.append("filters", JSON.stringify(serializedFilters));
+        }
       }
 
       const response = await fetch(buildUrl(resource, queryParams), {
@@ -70,12 +101,12 @@ export const postgresqlDataProvider = (): DataProvider => {
     },
 
     create: async ({ resource, variables, meta }) => {
-      const response = await fetch(buildUrl(resource), {
+      const response = await fetch(buildUrl(resource, undefined, false), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(variables),
+        body: JSON.stringify(withDbUrlInBody(variables)),
       });
 
       if (!response.ok) {
@@ -90,12 +121,12 @@ export const postgresqlDataProvider = (): DataProvider => {
     },
 
     update: async ({ resource, id, variables, meta }) => {
-      const response = await fetch(buildUrl(`${resource}/${id}`), {
+      const response = await fetch(buildUrl(`${resource}/${id}`, undefined, false), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(variables),
+        body: JSON.stringify(withDbUrlInBody(variables)),
       });
 
       if (!response.ok) {
@@ -137,15 +168,27 @@ export const postgresqlDataProvider = (): DataProvider => {
           queryParams.append(key, String(value));
         });
       }
-      const requestUrl = buildUrl(url.replace(/^\//, ""), queryParams);
+      const normalizedMethod = method?.toUpperCase() || "GET";
+      const shouldUseQueryDbUrl =
+        normalizedMethod === "GET" || normalizedMethod === "DELETE";
+
+      const requestUrl = buildUrl(
+        url.replace(/^\//, ""),
+        queryParams,
+        shouldUseQueryDbUrl,
+      );
 
       const response = await fetch(requestUrl, {
-        method: method || "GET",
+        method: normalizedMethod,
         headers: {
           "Content-Type": "application/json",
           ...headers,
         },
-        body: payload ? JSON.stringify(payload) : undefined,
+        body: payload
+          ? JSON.stringify(
+              shouldUseQueryDbUrl ? payload : withDbUrlInBody(payload),
+            )
+          : undefined,
       });
 
       if (!response.ok) {

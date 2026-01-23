@@ -26,14 +26,14 @@ export const DatabaseConnectionPage: React.FC = () => {
   const [connection, setConnection] = useState<DatabaseConnection>(() => {
     const savedConnection = getConnection();
     return {
-      databaseUrl:
-        savedConnection?.databaseUrl ||
+      dbUrl:
+        savedConnection?.dbUrl ||
         "postgresql://user:password@localhost:5432/database?sslmode=disable",
     };
   });
 
   const handleTestConnection = async () => {
-    if (!connection.databaseUrl) {
+    if (!connection.dbUrl) {
       setError("Please enter a PostgreSQL database URL.");
       return;
     }
@@ -68,7 +68,7 @@ export const DatabaseConnectionPage: React.FC = () => {
   };
 
   const handleSave = () => {
-    if (!connection.databaseUrl) {
+    if (!connection.dbUrl) {
       setError("Please enter a PostgreSQL database URL.");
       return;
     }
@@ -96,9 +96,9 @@ export const DatabaseConnectionPage: React.FC = () => {
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
               label="Database URL"
-              value={connection.databaseUrl}
+              value={connection.dbUrl}
               onChange={(e) =>
-                setConnection({ ...connection, databaseUrl: e.target.value })
+                setConnection({ ...connection, dbUrl: e.target.value })
               }
               helperText="Format: postgresql://user:password@host:port/database?sslmode=require"
               fullWidth
