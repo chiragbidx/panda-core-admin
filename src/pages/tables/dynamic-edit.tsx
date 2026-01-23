@@ -30,7 +30,8 @@ export const DynamicTableEdit: React.FC = () => {
   } = useForm<any, HttpError, any>({
     refineCoreProps: {
       resource: tableName,
-      id,
+      id: id ?? "",
+      action: "edit",
       meta: {
         // Ensure the backend can resolve DB connection for getOne
         query: {
