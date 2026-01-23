@@ -64,6 +64,15 @@ export const DynamicTableList: React.FC = () => {
         renderCell: function render({ row }) {
           const recordId =
             (primaryKey ? row[primaryKey] : undefined) ?? row.id ?? row.ID;
+          if (recordId === undefined || recordId === null) {
+            // Helps debug missing identifiers for edit/delete actions
+            // eslint-disable-next-line no-console
+            console.error(
+              "[DynamicTableList] Missing record id",
+              { tableName, primaryKey },
+              row,
+            );
+          }
           return (
             <>
               <EditButton hideText recordItemId={recordId} />
