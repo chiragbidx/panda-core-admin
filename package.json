@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npx refine dev",
-    "build": "npx refine build",
-    "start": "npx refine start"
+    "dev": "vite dev",
+    "build": "vite build",
+    "start": "vite preview"
   },
   "browserslist": {
     "production": [
