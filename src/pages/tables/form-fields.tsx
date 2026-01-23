@@ -7,7 +7,7 @@ import {
   InputLabel,
   FormHelperText,
 } from "@mui/material";
-import { Controller, FieldErrors, UseFormRegister, Control } from "react-hook-form";
+import { Controller, FieldErrors, UseFormRegister, Control, FieldValues } from "react-hook-form";
 import { type TableColumn } from "../../utils/database";
 
 export const getEditableColumns = (columns: TableColumn[]) =>
@@ -17,7 +17,7 @@ export const getEditableColumns = (columns: TableColumn[]) =>
       !col.column_default?.includes("gen_random_uuid"),
   );
 
-interface DynamicFormFieldsProps<TFormValues> {
+interface DynamicFormFieldsProps<TFormValues extends FieldValues> {
   columns: TableColumn[];
   control: Control<TFormValues>;
   register: UseFormRegister<TFormValues>;

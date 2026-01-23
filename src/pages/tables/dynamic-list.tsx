@@ -7,6 +7,14 @@ import { fetchTableColumns, type TableColumn } from "../../utils/database";
 import { Button, Stack } from "@mui/material";
 import { useNavigate } from "react-router";
 
+const resolveRowId = (
+  row: Record<string, any>,
+  primaryKey: string | null,
+): any => {
+  const key = primaryKey || "id";
+  return row[key] ?? row.id ?? row.ID ?? JSON.stringify(row);
+};
+
 export const DynamicTableList: React.FC = () => {
   const { tableName } = useParams<{ tableName: string }>();
   const { open } = useNotification();
@@ -62,15 +70,7 @@ export const DynamicTableList: React.FC = () => {
         headerName: "Actions",
         sortable: false,
         renderCell: function render({ row }) {
-          const resolveId = (data: any) => {
-            const fromGetter =
-              dataGridWithIds.getRowId?.(data) ??
-              ((primaryKey ? data[primaryKey] : undefined) ??
-                data.id ??
-                data.ID);
-            return fromGetter;
-          };
-          const recordId = resolveId(row);
+          const recordId = resolveRowId(row, primaryKey);
           if (recordId === undefined || recordId === null) {
             // Helps debug missing identifiers for edit/delete actions
             // eslint-disable-next-line no-console
@@ -121,8 +121,7 @@ export const DynamicTableList: React.FC = () => {
   const resolvedPrimaryKey = primaryKey || "id";
   const dataGridWithIds = {
     ...dataGridProps,
-    getRowId: (row: any) =>
-      row[resolvedPrimaryKey] ?? row.id ?? row.ID ?? JSON.stringify(row),
+    getRowId: (row: any) => resolveRowId(row, resolvedPrimaryKey),
   };
 
   return (

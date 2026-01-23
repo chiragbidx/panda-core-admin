@@ -54,7 +54,7 @@ export const fetchTableColumns = async (
   tableName: string,
 ): Promise<TableColumn[]> => {
   const response = await fetch(
-    appendDbUrl(`${API_URL}/tables/${tableName}/columns`),
+    appendDbUrl(`${API_URL}/tables/${encodeURIComponent(tableName)}/columns`),
     {
       headers: {
         "Content-Type": "application/json",

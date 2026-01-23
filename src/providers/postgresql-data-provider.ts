@@ -5,13 +5,17 @@ const API_URL =
   import.meta.env.VITE_API_URL ||
   "https://panda-core-admin-gateway-production.up.railway.app/api";
 
-const buildUrl = (
-  path: string,
-  params?: URLSearchParams,
-  includeDbUrl = true,
-) => {
+const encodePath = (path: string) =>
+  path
+    .split("/")
+    .filter(Boolean)
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+const buildUrl = (path: string, params?: URLSearchParams, includeDbUrl = true) => {
   const query = params && params.toString() ? `?${params.toString()}` : "";
-  const url = `${API_URL}/${path}${query}`;
+  const encodedPath = encodePath(path);
+  const url = `${API_URL}/${encodedPath}${query}`;
   return includeDbUrl ? withDbUrl(url) : url;
 };
 
