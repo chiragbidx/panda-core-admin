@@ -11,21 +11,18 @@ The API base URL is configured via the `VITE_API_URL` environment variable (defa
 ```
 POST /api/database/connect
 Body: {
-  host: string,
-  port: number,
-  database: string,
-  user: string,
-  password: string,
-  ssl?: boolean
+  databaseUrl: string
 }
 Response: {
   success: boolean
 }
 ```
 
+**All endpoints include a `databaseUrl` query parameter in requests from the frontend so the gateway can route to the correct database connection.**
+
 ### 2. Get All Tables
 ```
-GET /api/tables
+GET /api/tables?databaseUrl=postgresql://...
 Response: {
   data: Array<{
     table_name: string,
@@ -102,16 +99,12 @@ let pool = null;
 
 // Connect to database
 app.post('/api/database/connect', async (req, res) => {
-  const { host, port, database, user, password, ssl } = req.body;
+  const { databaseUrl } = req.body;
   
   try {
     pool = new Pool({
-      host,
-      port,
-      database,
-      user,
-      password,
-      ssl: ssl || false,
+      connectionString: databaseUrl,
+      ssl: databaseUrl.includes('sslmode=require'),
     });
     
     await pool.query('SELECT NOW()');

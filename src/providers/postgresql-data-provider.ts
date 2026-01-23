@@ -1,6 +1,12 @@
 import { DataProvider } from "@refinedev/core";
+import { withDatabaseUrl } from "../utils/database";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
+const buildUrl = (path: string, params?: URLSearchParams) => {
+  const query = params && params.toString() ? `?${params.toString()}` : "";
+  return withDatabaseUrl(`${API_URL}/${path}${query}`);
+};
 
 export const postgresqlDataProvider = (): DataProvider => {
   return {
@@ -25,8 +31,7 @@ export const postgresqlDataProvider = (): DataProvider => {
         });
       }
 
-      const url = `${API_URL}/${resource}?${queryParams.toString()}`;
-      const response = await fetch(url, {
+      const response = await fetch(buildUrl(resource, queryParams), {
         headers: {
           "Content-Type": "application/json",
         },
@@ -48,8 +53,7 @@ export const postgresqlDataProvider = (): DataProvider => {
     },
 
     getOne: async ({ resource, id, meta }) => {
-      const url = `${API_URL}/${resource}/${id}`;
-      const response = await fetch(url, {
+      const response = await fetch(buildUrl(`${resource}/${id}`), {
         headers: {
           "Content-Type": "application/json",
         },
@@ -66,8 +70,7 @@ export const postgresqlDataProvider = (): DataProvider => {
     },
 
     create: async ({ resource, variables, meta }) => {
-      const url = `${API_URL}/${resource}`;
-      const response = await fetch(url, {
+      const response = await fetch(buildUrl(resource), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -87,8 +90,7 @@ export const postgresqlDataProvider = (): DataProvider => {
     },
 
     update: async ({ resource, id, variables, meta }) => {
-      const url = `${API_URL}/${resource}/${id}`;
-      const response = await fetch(url, {
+      const response = await fetch(buildUrl(`${resource}/${id}`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -108,8 +110,7 @@ export const postgresqlDataProvider = (): DataProvider => {
     },
 
     deleteOne: async ({ resource, id, meta }) => {
-      const url = `${API_URL}/${resource}/${id}`;
-      const response = await fetch(url, {
+      const response = await fetch(buildUrl(`${resource}/${id}`), {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -130,15 +131,13 @@ export const postgresqlDataProvider = (): DataProvider => {
     getApiUrl: () => API_URL,
 
     custom: async ({ url, method, filters, sorters, payload, query, headers }) => {
-      let requestUrl = `${API_URL}${url}`;
-
+      const queryParams = new URLSearchParams();
       if (query) {
-        const queryParams = new URLSearchParams();
         Object.entries(query).forEach(([key, value]) => {
           queryParams.append(key, String(value));
         });
-        requestUrl += `?${queryParams.toString()}`;
       }
+      const requestUrl = buildUrl(url.replace(/^\//, ""), queryParams);
 
       const response = await fetch(requestUrl, {
         method: method || "GET",

@@ -8,8 +8,6 @@ import {
   Typography,
   Alert,
   CircularProgress,
-  FormControlLabel,
-  Switch,
 } from "@mui/material";
 import { useNotification } from "@refinedev/core";
 import {
@@ -25,19 +23,21 @@ export const DatabaseConnectionPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const savedConnection = getConnection();
-  const [connection, setConnection] = useState<DatabaseConnection>(
-    savedConnection || {
-      host: "localhost",
-      port: 5432,
-      database: "",
-      user: "",
-      password: "",
-      ssl: false,
-    },
-  );
+  const [connection, setConnection] = useState<DatabaseConnection>(() => {
+    const savedConnection = getConnection();
+    return {
+      databaseUrl:
+        savedConnection?.databaseUrl ||
+        "postgresql://user:password@localhost:5432/database?sslmode=disable",
+    };
+  });
 
   const handleTestConnection = async () => {
+    if (!connection.databaseUrl) {
+      setError("Please enter a PostgreSQL database URL.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -68,6 +68,11 @@ export const DatabaseConnectionPage: React.FC = () => {
   };
 
   const handleSave = () => {
+    if (!connection.databaseUrl) {
+      setError("Please enter a PostgreSQL database URL.");
+      return;
+    }
+
     saveConnection(connection);
     open?.({
       type: "success",
@@ -82,70 +87,22 @@ export const DatabaseConnectionPage: React.FC = () => {
         Database Connection
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Configure your PostgreSQL database connection. The connection details
-        will be used to fetch tables and perform CRUD operations.
+        Provide a PostgreSQL connection URL. The URL will be sent to the backend
+        gateway and included on every request to fetch tables and data.
       </Typography>
 
       <Card>
         <CardContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
-              label="Host"
-              value={connection.host}
+              label="Database URL"
+              value={connection.databaseUrl}
               onChange={(e) =>
-                setConnection({ ...connection, host: e.target.value })
+                setConnection({ ...connection, databaseUrl: e.target.value })
               }
+              helperText="Format: postgresql://user:password@host:port/database?sslmode=require"
               fullWidth
               required
-            />
-            <TextField
-              label="Port"
-              type="number"
-              value={connection.port}
-              onChange={(e) =>
-                setConnection({ ...connection, port: parseInt(e.target.value) })
-              }
-              fullWidth
-              required
-            />
-            <TextField
-              label="Database"
-              value={connection.database}
-              onChange={(e) =>
-                setConnection({ ...connection, database: e.target.value })
-              }
-              fullWidth
-              required
-            />
-            <TextField
-              label="User"
-              value={connection.user}
-              onChange={(e) =>
-                setConnection({ ...connection, user: e.target.value })
-              }
-              fullWidth
-              required
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={connection.password}
-              onChange={(e) =>
-                setConnection({ ...connection, password: e.target.value })
-              }
-              fullWidth
-              required
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={connection.ssl || false}
-                  onChange={(e) =>
-                    setConnection({ ...connection, ssl: e.target.checked })
-                  }
-                />
-              }
-              label="Use SSL"
             />
 
             {error && (

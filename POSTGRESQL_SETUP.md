@@ -52,13 +52,7 @@ node server.js
 ### 3. Connect to Database
 
 1. Navigate to `/database/connection` in your browser
-2. Enter your PostgreSQL connection details:
-   - Host (e.g., `localhost`)
-   - Port (default: `5432`)
-   - Database name
-   - Username
-   - Password
-   - SSL (if required)
+2. Enter your PostgreSQL database URL (e.g., `postgresql://user:password@localhost:5432/database?sslmode=disable`).
 3. Click "Test Connection" to verify
 4. Click "Save Configuration" to store settings
 

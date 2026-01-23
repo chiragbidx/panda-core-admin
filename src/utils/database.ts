@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const STORAGE_KEY = "db_connection";
 
 export interface DatabaseTable {
   table_name: string;
@@ -14,19 +15,23 @@ export interface TableColumn {
 }
 
 export interface DatabaseConnection {
-  host: string;
-  port: number;
-  database: string;
-  user: string;
-  password: string;
-  ssl?: boolean;
+  databaseUrl: string;
 }
+
+const appendDatabaseUrl = (url: string): string => {
+  const connection = getConnection();
+  const databaseUrl = connection?.databaseUrl;
+  if (!databaseUrl) return url;
+
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}databaseUrl=${encodeURIComponent(databaseUrl)}`;
+};
 
 /**
  * Fetch all tables from the database
  */
 export const fetchTables = async (): Promise<DatabaseTable[]> => {
-  const response = await fetch(`${API_URL}/tables`, {
+  const response = await fetch(appendDatabaseUrl(`${API_URL}/tables`), {
     headers: {
       "Content-Type": "application/json",
     },
@@ -46,11 +51,14 @@ export const fetchTables = async (): Promise<DatabaseTable[]> => {
 export const fetchTableColumns = async (
   tableName: string,
 ): Promise<TableColumn[]> => {
-  const response = await fetch(`${API_URL}/tables/${tableName}/columns`, {
-    headers: {
-      "Content-Type": "application/json",
+  const response = await fetch(
+    appendDatabaseUrl(`${API_URL}/tables/${tableName}/columns`),
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch columns for table ${tableName}`);
@@ -86,14 +94,14 @@ export const testConnection = async (
  * Save database connection configuration
  */
 export const saveConnection = (connection: DatabaseConnection): void => {
-  localStorage.setItem("db_connection", JSON.stringify(connection));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(connection));
 };
 
 /**
  * Get saved database connection configuration
  */
 export const getConnection = (): DatabaseConnection | null => {
-  const stored = localStorage.getItem("db_connection");
+  const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) return null;
   try {
     return JSON.parse(stored);
@@ -101,3 +109,10 @@ export const getConnection = (): DatabaseConnection | null => {
     return null;
   }
 };
+
+export const getDatabaseUrl = (): string | null => {
+  const connection = getConnection();
+  return connection?.databaseUrl || null;
+};
+
+export const withDatabaseUrl = appendDatabaseUrl;
