@@ -32,7 +32,10 @@ const withDbUrlInBody = (payload: Record<string, unknown> = {}) => {
 export const postgresqlDataProvider = (): DataProvider => {
   return {
     getList: async ({ resource, pagination, filters, sorters, meta }) => {
-      const { current = 1, pageSize = 10 } = pagination ?? {};
+      const { current = 1, pageSize = 10 } = (pagination ?? {}) as {
+        current?: number;
+        pageSize?: number;
+      };
 
       const queryParams = new URLSearchParams();
       queryParams.append("_page", current.toString());
@@ -110,7 +113,9 @@ export const postgresqlDataProvider = (): DataProvider => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(withDbUrlInBody(variables)),
+        body: JSON.stringify(
+          withDbUrlInBody(variables as Record<string, unknown>),
+        ),
       });
 
       if (!response.ok) {
@@ -130,7 +135,9 @@ export const postgresqlDataProvider = (): DataProvider => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(withDbUrlInBody(variables)),
+        body: JSON.stringify(
+          withDbUrlInBody(variables as Record<string, unknown>),
+        ),
       });
 
       if (!response.ok) {
@@ -190,7 +197,9 @@ export const postgresqlDataProvider = (): DataProvider => {
         },
         body: payload
           ? JSON.stringify(
-              shouldUseQueryDbUrl ? payload : withDbUrlInBody(payload),
+              shouldUseQueryDbUrl
+                ? payload
+                : withDbUrlInBody(payload as Record<string, unknown>),
             )
           : undefined,
       });

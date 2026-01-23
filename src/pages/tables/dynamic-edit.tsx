@@ -30,11 +30,11 @@ export const DynamicTableEdit: React.FC = () => {
 
   const {
     saveButtonProps,
-    refineCore: { query: queryResult },
     register,
     control,
     formState: { errors },
     reset,
+    getValues,
   } = useForm<any, HttpError, any>({
     refineCoreProps: {
       resource: tableName,
@@ -63,8 +63,13 @@ export const DynamicTableEdit: React.FC = () => {
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
       },
-      onMutationSuccess: (data, variables) => {
-        // Keep current form values; no reset to avoid reverting fields
+      onMutationSuccess: (_data, variables) => {
+        const nextValues =
+          variables ||
+          getValues() ||
+          recordFromState ||
+          {};
+        reset(nextValues as any);
       },
     },
     defaultValues: recordFromState as any,
@@ -89,10 +94,6 @@ export const DynamicTableEdit: React.FC = () => {
     try {
       const columns = await fetchTableColumns(tableName);
       setTableColumns(getEditableColumns(columns));
-        // If data already loaded, ensure form is populated with fetched record
-        if (queryResult?.data?.data) {
-          reset(queryResult.data.data as any);
-        }
     } catch (err: any) {
       open?.({
         type: "error",
@@ -103,13 +104,6 @@ export const DynamicTableEdit: React.FC = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    const record = queryResult?.data?.data;
-    if (record && !recordFromState) {
-      reset(record as any);
-    }
-  }, [queryResult?.data?.data, recordFromState, reset]);
 
   if (loading) {
     return <Edit>Loading form...</Edit>;
