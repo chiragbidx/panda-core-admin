@@ -44,8 +44,9 @@ export const DynamicTableEdit: React.FC = () => {
           dbUrl: getDatabaseUrl() || "",
         },
       },
+      // Disable automatic getOne to prevent failing GETs; we hydrate from navigation state
       queryOptions: {
-        enabled: !!tableName && !!id,
+        enabled: false,
       },
     },
   });
