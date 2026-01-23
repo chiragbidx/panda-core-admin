@@ -4,7 +4,9 @@ import type { HttpError } from "@refinedev/core";
 import { Edit } from "@refinedev/mui";
 import { useForm } from "@refinedev/react-hook-form";
 import { useNotification } from "@refinedev/core";
-import { Box } from "@mui/material";
+import { Box, Button } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useNavigate } from "react-router";
 import { fetchTableColumns, type TableColumn } from "../../utils/database";
 import {
   DynamicFormFields,
@@ -14,6 +16,7 @@ import {
 export const DynamicTableEdit: React.FC = () => {
   const { tableName, id } = useParams<{ tableName: string; id: string }>();
   const { open } = useNotification();
+  const navigate = useNavigate();
   const [tableColumns, setTableColumns] = useState<TableColumn[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,10 +26,17 @@ export const DynamicTableEdit: React.FC = () => {
     register,
     control,
     formState: { errors },
+    reset,
   } = useForm<any, HttpError, any>({
     refineCoreProps: {
       resource: tableName,
       id,
+      meta: {
+        // Ensure the backend can resolve DB connection for getOne
+        query: {
+          dbUrl: undefined,
+        },
+      },
     },
   });
 
@@ -54,12 +64,29 @@ export const DynamicTableEdit: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const record = queryResult?.data?.data;
+    if (record) {
+      reset(record as any);
+    }
+  }, [queryResult?.data?.data, reset]);
+
   if (loading) {
     return <Edit>Loading form...</Edit>;
   }
 
   return (
-    <Edit saveButtonProps={saveButtonProps}>
+    <Edit
+      saveButtonProps={saveButtonProps}
+      goBack={
+        <Button
+          onClick={() => navigate(`/tables/${tableName}`)}
+          startIcon={<ArrowBackIcon />}
+        >
+          Back
+        </Button>
+      }
+    >
       <Box
         component="form"
         sx={{ display: "flex", flexDirection: "column" }}

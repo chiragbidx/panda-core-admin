@@ -75,7 +75,15 @@ export const DynamicTableList: React.FC = () => {
           }
           return (
             <>
-              <EditButton hideText recordItemId={recordId} />
+              <EditButton
+                hideText
+                recordItemId={recordId}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (recordId === undefined || recordId === null) return;
+                  navigate(`/tables/${tableName}/edit/${recordId}`);
+                }}
+              />
               <DeleteButton hideText recordItemId={recordId} />
             </>
           );
