@@ -4,10 +4,13 @@ import { useDataGrid, List, EditButton, DeleteButton } from "@refinedev/mui";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { useNotification } from "@refinedev/core";
 import { fetchTableColumns, type TableColumn } from "../../utils/database";
+import { Button, Stack } from "@mui/material";
+import { useNavigate } from "react-router";
 
 export const DynamicTableList: React.FC = () => {
   const { tableName } = useParams<{ tableName: string }>();
   const { open } = useNotification();
+  const navigate = useNavigate();
   const { dataGridProps } = useDataGrid({
     resource: tableName,
   });
@@ -78,7 +81,19 @@ export const DynamicTableList: React.FC = () => {
   }
 
   return (
-    <List>
+    <List
+      headerButtons={() => (
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => navigate(`/tables/${tableName}/create`)}
+          >
+            Add Row
+          </Button>
+        </Stack>
+      )}
+    >
       <div
         style={{
           display: "flex",
