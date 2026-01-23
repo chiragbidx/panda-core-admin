@@ -16,6 +16,7 @@ export const DynamicTableList: React.FC = () => {
   });
   const [columns, setColumns] = useState<TableColumn[]>([]);
   const [gridColumns, setGridColumns] = useState<GridColDef[]>([]);
+  const [primaryKey, setPrimaryKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,6 +32,15 @@ export const DynamicTableList: React.FC = () => {
     try {
       const tableColumns = await fetchTableColumns(tableName);
       setColumns(tableColumns);
+
+      const detectedPrimary =
+        tableColumns.find((col) => col.column_default?.includes("nextval"))
+          ?.column_name ||
+        tableColumns.find((col) => col.column_default?.includes("uuid"))
+          ?.column_name ||
+        tableColumns[0]?.column_name ||
+        null;
+      setPrimaryKey(detectedPrimary);
 
       // Generate grid columns from table columns
       const generatedColumns: GridColDef[] = tableColumns.map((col) => ({
@@ -52,10 +62,12 @@ export const DynamicTableList: React.FC = () => {
         headerName: "Actions",
         sortable: false,
         renderCell: function render({ row }) {
+          const recordId =
+            (primaryKey ? row[primaryKey] : undefined) ?? row.id ?? row.ID;
           return (
             <>
-              <EditButton hideText recordItemId={row.id} />
-              <DeleteButton hideText recordItemId={row.id} />
+              <EditButton hideText recordItemId={recordId} />
+              <DeleteButton hideText recordItemId={recordId} />
             </>
           );
         },
@@ -80,6 +92,13 @@ export const DynamicTableList: React.FC = () => {
     return <List>Loading table structure...</List>;
   }
 
+  const resolvedPrimaryKey = primaryKey || "id";
+  const dataGridWithIds = {
+    ...dataGridProps,
+    getRowId: (row: any) =>
+      row[resolvedPrimaryKey] ?? row.id ?? row.ID ?? JSON.stringify(row),
+  };
+
   return (
     <List
       headerButtons={() => (
@@ -101,7 +120,7 @@ export const DynamicTableList: React.FC = () => {
           maxHeight: "calc(100vh - 320px)",
         }}
       >
-        <DataGrid {...dataGridProps} columns={gridColumns} />
+        <DataGrid {...dataGridWithIds} columns={gridColumns} />
       </div>
     </List>
   );
