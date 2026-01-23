@@ -7,7 +7,7 @@
 </br>
 
 <div align="center">
-    <a href="https://refine.dev">Home Page</a> |
+    <a href="https://refine.dev">Home Page 1</a> |
     <a href="https://discord.gg/refine">Discord</a> |
     <a href="https://refine.dev/examples/">Examples</a> |
     <a href="https://refine.dev/blog/">Blog</a> |
