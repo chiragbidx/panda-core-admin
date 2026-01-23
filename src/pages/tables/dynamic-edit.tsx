@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router";
+import { useParams, useLocation } from "react-router";
 import type { HttpError } from "@refinedev/core";
 import { Edit } from "@refinedev/mui";
 import { useForm } from "@refinedev/react-hook-form";
@@ -15,6 +15,12 @@ import {
 
 export const DynamicTableEdit: React.FC = () => {
   const { tableName, id } = useParams<{ tableName: string; id: string }>();
+  const location = useLocation();
+  const locationState = location.state as
+    | { record?: Record<string, any>; recordId?: string | number }
+    | null;
+  const recordFromState = locationState?.record;
+  const recordIdFromState = locationState?.recordId;
   const { open } = useNotification();
   const navigate = useNavigate();
   const [tableColumns, setTableColumns] = useState<TableColumn[]>([]);
@@ -30,7 +36,7 @@ export const DynamicTableEdit: React.FC = () => {
   } = useForm<any, HttpError, any>({
     refineCoreProps: {
       resource: tableName,
-      id: id ?? "",
+      id: (id ?? recordIdFromState ?? recordFromState?.id ?? "") as string,
       action: "edit",
       meta: {
         // Ensure the backend can resolve DB connection for getOne
@@ -49,6 +55,12 @@ export const DynamicTableEdit: React.FC = () => {
       loadTableColumns();
     }
   }, [tableName]);
+
+  useEffect(() => {
+    if (recordFromState) {
+      reset(recordFromState as any);
+    }
+  }, [recordFromState, reset]);
 
   const loadTableColumns = async () => {
     if (!tableName) return;

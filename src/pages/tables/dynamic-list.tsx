@@ -62,8 +62,15 @@ export const DynamicTableList: React.FC = () => {
         headerName: "Actions",
         sortable: false,
         renderCell: function render({ row }) {
-          const recordId =
-            (primaryKey ? row[primaryKey] : undefined) ?? row.id ?? row.ID;
+          const resolveId = (data: any) => {
+            const fromGetter =
+              dataGridWithIds.getRowId?.(data) ??
+              ((primaryKey ? data[primaryKey] : undefined) ??
+                data.id ??
+                data.ID);
+            return fromGetter;
+          };
+          const recordId = resolveId(row);
           if (recordId === undefined || recordId === null) {
             // Helps debug missing identifiers for edit/delete actions
             // eslint-disable-next-line no-console
@@ -81,7 +88,9 @@ export const DynamicTableList: React.FC = () => {
                 onClick={(e) => {
                   e.preventDefault();
                   if (recordId === undefined || recordId === null) return;
-                  navigate(`/tables/${tableName}/edit/${recordId}`);
+                  navigate(`/tables/${tableName}/edit/${recordId}`, {
+                    state: { record: row, recordId },
+                  });
                 }}
               />
               <DeleteButton hideText recordItemId={recordId} />
