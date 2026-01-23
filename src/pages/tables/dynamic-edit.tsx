@@ -7,7 +7,7 @@ import { useNotification } from "@refinedev/core";
 import { Box, Button } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router";
-import { fetchTableColumns, type TableColumn } from "../../utils/database";
+import { fetchTableColumns, getDatabaseUrl, type TableColumn } from "../../utils/database";
 import {
   DynamicFormFields,
   getEditableColumns,
@@ -34,7 +34,15 @@ export const DynamicTableEdit: React.FC = () => {
       meta: {
         // Ensure the backend can resolve DB connection for getOne
         query: {
-          dbUrl: undefined,
+          dbUrl: getDatabaseUrl() || "",
+        },
+      },
+      queryOptions: {
+        enabled: !!tableName && !!id,
+        onSuccess: (data) => {
+          if (data?.data) {
+            reset(data.data as any);
+          }
         },
       },
     },
@@ -53,6 +61,10 @@ export const DynamicTableEdit: React.FC = () => {
     try {
       const columns = await fetchTableColumns(tableName);
       setTableColumns(getEditableColumns(columns));
+      // If data already loaded, ensure form is populated with fetched record
+      if (queryResult?.data?.data) {
+        reset(queryResult.data.data as any);
+      }
     } catch (err: any) {
       open?.({
         type: "error",
