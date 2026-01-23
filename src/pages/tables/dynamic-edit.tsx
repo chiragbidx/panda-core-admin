@@ -39,11 +39,6 @@ export const DynamicTableEdit: React.FC = () => {
       },
       queryOptions: {
         enabled: !!tableName && !!id,
-        onSuccess: (data) => {
-          if (data?.data) {
-            reset(data.data as any);
-          }
-        },
       },
     },
   });
